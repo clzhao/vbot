@@ -46,13 +46,14 @@ class RequestFriend extends Message implements MessageInterface
     }
 
     /**
-     * 验证通过好友
+     * 验证通过好友或者主动添加好友
      *
      * @param $code
      * @param null $ticket
+     * @param string $content 添加好友附加消息
      * @return bool
      */
-    public function verifyUser($code, $ticket = null)
+    public function verifyUser($code, $ticket = null, $content = '')
     {
         $url = sprintf(server()->baseUri . '/webwxverifyuser?lang=zh_CN&r=%s&pass_ticket=%s', time() * 1000, server()->passTicket);
         $data = [
@@ -60,7 +61,7 @@ class RequestFriend extends Message implements MessageInterface
             'Opcode' => $code,
             'VerifyUserListSize' => 1,
             'VerifyUserList' => [$ticket ?: $this->verifyTicket()],
-            'VerifyContent' => '',
+            'VerifyContent' => $content,
             'SceneListCount' => 1,
             'SceneList' => [33],
             'skey' => server()->skey
@@ -81,6 +82,14 @@ class RequestFriend extends Message implements MessageInterface
         return [
             'Value' => $this->info['UserName'],
             'VerifyUserTicket' => $this->info['Ticket']
+        ];
+    }
+
+    public function addUserTicket($username)
+    {
+        return [
+            'Value' => $username,
+            'VerifyUserTicket' => ''
         ];
     }
 }

@@ -56,15 +56,17 @@ class ContactFactory
 
         $memberList = http()->json($url, [], true)['MemberList'];
 
-        foreach ($memberList as $contact) {
-            if(official()->isOfficial($contact['VerifyFlag'])){ #公众号
-                Official::getInstance()->put($contact['UserName'], $contact);
-            }elseif (in_array($contact['UserName'], static::SPECIAL_USERS)){ # 特殊账户
-                Special::getInstance()->put($contact['UserName'], $contact);
-            }elseif (strstr($contact['UserName'], '@@') !== false){ # 群聊
-                group()->put($contact['UserName'], $contact);
-            }else{
-                contact()->put($contact['UserName'], $contact);
+        if($memberList){
+            foreach ($memberList as $contact) {
+                if(official()->isOfficial($contact['VerifyFlag'])){ #公众号
+                    Official::getInstance()->put($contact['UserName'], $contact);
+                }elseif (in_array($contact['UserName'], static::SPECIAL_USERS)){ # 特殊账户
+                    Special::getInstance()->put($contact['UserName'], $contact);
+                }elseif (strstr($contact['UserName'], '@@') !== false){ # 群聊
+                    group()->put($contact['UserName'], $contact);
+                }else{
+                    contact()->put($contact['UserName'], $contact);
+                }
             }
         }
     }

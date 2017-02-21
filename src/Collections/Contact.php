@@ -13,6 +13,7 @@ use Illuminate\Support\Collection;
 
 class Contact extends Collection
 {
+    const ADD = 2;
 
     /**
      * @var Contact
@@ -92,6 +93,13 @@ class Contact extends Collection
         });
     }
 
+    /**
+     * 设置备注名
+     *
+     * @param $username
+     * @param $remarkName
+     * @return bool
+     */
     public function setRemarkName($username, $remarkName)
     {
         $url = sprintf('%s/webwxoplog?lang=zh_CN&pass_ticket=%s', server()->baseUri, server()->passTicket);
@@ -106,6 +114,13 @@ class Contact extends Collection
         return $result['BaseResponse']['Ret'] == 0;
     }
 
+    /**
+     * 设置/取消置顶
+     *
+     * @param $username
+     * @param bool $isStick
+     * @return bool
+     */
     public function setStick($username, $isStick = true)
     {
         $url = sprintf('%s/webwxoplog?lang=zh_CN&pass_ticket=%s', server()->baseUri, server()->passTicket);
@@ -118,6 +133,60 @@ class Contact extends Collection
         ], true);
 
         return $result['BaseResponse']['Ret'] == 0;
+    }
+
+
+    public function requestContact($username)
+    {
+        $this->verifyUser(static::ADD);
+    }
+
+    /**
+     * 验证通过好友或者主动添加好友
+     *
+     * @param $code
+     * @param null $ticket
+     * @param string $content 添加好友附加消息
+     * @return bool
+     */
+    public function verifyUser($code, $ticket = null, $content = '')
+    {
+        $url = sprintf(server()->baseUri . '/webwxverifyuser?lang=zh_CN&r=%s&pass_ticket=%s', time() * 1000, server()->passTicket);
+        $data = [
+            'BaseRequest' => server()->baseRequest,
+            'Opcode' => $code,
+            'VerifyUserListSize' => 1,
+            'VerifyUserList' => [$ticket ?: $this->verifyTicket()],
+            'VerifyContent' => $content,
+            'SceneListCount' => 1,
+            'SceneList' => [33],
+            'skey' => server()->skey
+        ];
+
+        $result = http()->json($url, $data, true);
+
+        return $result['BaseResponse']['Ret'] == 0;
+    }
+
+    /**
+     * 返回通过好友申请所需的数组
+     *
+     * @return array
+     */
+    private function verifyTicket()
+    {
+        return [
+            'Value' => $this->info['UserName'],
+            'VerifyUserTicket' => $this->info['Ticket']
+        ];
+    }
+
+    private function addUserTicket($username)
+    {
+        return [
+            'Value' => $username,
+            'VerifyUserTicket' => ''
+        ];
     }
 
 }
